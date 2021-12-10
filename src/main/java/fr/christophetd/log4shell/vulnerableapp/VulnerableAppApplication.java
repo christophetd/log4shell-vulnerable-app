@@ -1,4 +1,4 @@
-package com.datadoghq.log4jexample.vulnerableapp;
+package fr.christophetd.log4shell.vulnerableapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -4,7 +4,7 @@ plugins {
 	id 'java'
 }
 
-group = 'com.datadoghq.log4jexample'
+group = 'fr.christophetd.log4shell'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
 
