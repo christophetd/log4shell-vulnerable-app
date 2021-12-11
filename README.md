@@ -8,17 +8,12 @@ It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.
 
 ## Running the application
 
-Run it:
+Run a complete security lab environment for log4shell:
 
 ```bash
-docker run --name vulnerable-app -p 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app
+docker-compose up
 ```
 
-Build it yourself (you don't need any Java-related tooling):
-
-```bash
-docker build . -t vulnerable-app
-docker run -p 8080:8080 --name vulnerable-app vulnerable-app
 ```
 
 ## Exploitation steps
