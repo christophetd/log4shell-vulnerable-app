@@ -4,11 +4,13 @@ This repository contains a Spring Boot web application vulnerable to CVE-2021-44
 
 It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.8.0_181.
 
+Now in a fully self-contained docker lab environment (thanks to @darylrobbins).
+
 ![](./screenshot.png)
 
 ## Running the application
 
-Run a complete security lab environment for log4shell:
+Run a complete Docker security lab environment for log4shell:
 
 ```bash
 docker-compose up
