@@ -4,7 +4,7 @@ This repository contains a Spring Boot web application vulnerable to CVE-2021-44
 
 It uses Log4j 2.14.1 (through `spring-boot-starter-log4j2` 2.6.1) and the JDK 1.8.0_181.
 
-![](./screenshot.png)
+![](./screenshot.png) 
 
 ## Running the application
 
