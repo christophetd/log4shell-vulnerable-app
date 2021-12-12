@@ -1,0 +1,14 @@
+name: "ContainerScan"
+on: [push]
+
+jobs:
+  build-secure-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    
+    - name: AnalyzeES
+      uses: Azure/container-scan@v0.1
+      with:
+        image-name: docker.elastic.co/elasticsearch/elasticsearch:7.14.2
