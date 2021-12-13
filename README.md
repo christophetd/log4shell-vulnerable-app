@@ -25,6 +25,8 @@ docker run -p 8080:8080 --name vulnerable-app vulnerable-app
 
 *Note: This is highly inspired from the original [LunaSec advisory](https://www.lunasec.io/docs/blog/log4j-zero-day/). **Run at your own risk, preferably in a VM in a sandbox environment**.*
 
+**Update (Dec 13th)**: Github has decided to takedown the JNDIExploit repository. Thanks to Github, you now do not have the tooling anymore to reproduce this vulnerability locally. Don't worry, attackers have the exploit at hand and are actively using it. Thank you, Github. See also https://twitter.com/christophetd/status/1470287687265529861
+
 * Use [JNDIExploit](https://github.com/feihong-cs/JNDIExploit/releases/tag/v1.2) to spin up a malicious LDAP server
 
 ```bash
