@@ -27,6 +27,8 @@ docker run -p 8080:8080 --name vulnerable-app vulnerable-app
 
 **Update (Dec 13th)**: *Github has [decided to take down the JNDIExploit repository](https://twitter.com/christophetd/status/1470287687265529861). Thanks to Github, you now do not have the tooling anymore to reproduce this vulnerability locally. Don't worry, attackers have the exploit at hand and are actively using it. Thank you, Github. Although I will refrain from linking to it to avoid this repository being taken down by Github, note that - as a general information - appending `web.archive.org` in front of any URL that has been taken down and archived by the Wayback Machine can at times be helpful.*
 
+**Update (Dec 13th)**: In case this repository gets taken down as well, I published it on [GitLab](https://gitlab.com/christophetd/log4shell-vulnerable-app) as well.
+
 * Use [JNDIExploit](https://github.com/feihong-cs/JNDIExploit/releases/tag/v1.2) to spin up a malicious LDAP server
 
 ```bash
