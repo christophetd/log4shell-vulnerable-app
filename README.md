@@ -21,6 +21,16 @@ docker build . -t vulnerable-app
 docker run -p 8080:8080 --name vulnerable-app vulnerable-app
 ```
 
+### Without docker
+
+    gradle clean bootJar --no-daemon
+    java -jar ./build/libs/log4shell-vulnerable-app-0.0.1-SNAPSHOT.jar
+
+And to send the exploit:
+
+    curl 127.0.0.1:8080 -H 'X-Api-Version: <PAYLOAD>'
+
+
 ## Exploitation steps
 
 *Note: This is highly inspired from the original [LunaSec advisory](https://www.lunasec.io/docs/blog/log4j-zero-day/). **Run at your own risk, preferably in a VM in a sandbox environment**.*
