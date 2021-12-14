@@ -1,0 +1,31 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  jndi:
+    build:
+      context: .
+      dockerfile: Dockerfile-jndi
+    ports:
+      - "8888:8888"
+      - "1389:1389"
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - tmp:/tmp
+    links:
+      - jndi
+    depends_on:
+      - jndi
+  exploit:
+   build:
+     context: .
+     dockerfile: Dockerfile-exploit
+   volumes:
+     - tmp:/tmp
+   depends_on:
+     - app
+     - jndi
+
+volumes:
+  tmp:
