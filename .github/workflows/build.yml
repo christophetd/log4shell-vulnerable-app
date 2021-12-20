@@ -3,8 +3,7 @@ on:
   push:
     branches:
       - master # or the name of your main branch
-  pull_request:
-    types: [opened, synchronize, reopened]
+
 jobs:
   build:
     name: Build
@@ -34,4 +33,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Iv1.2815efa9f94be6d8
