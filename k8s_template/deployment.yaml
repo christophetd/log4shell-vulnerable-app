@@ -1,3 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: log4shell
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: allow_all
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: allow_all_bind
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: allow_all
+subjects:
+  - kind: ServiceAccount
+    name: log4shell
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +41,7 @@ spec:
       labels:
         app: log4shell
     spec:
+      serviceAccountName: log4shell
       containers:
       - name: log4shell
         image: ghcr.io/christophetd/log4shell-vulnerable-app
