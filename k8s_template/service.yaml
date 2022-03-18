@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log4shell
+  labels:
+    app: log4shell
+spec:
+  type: LoadBalancer
+  selector:
+    app: log4shell
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: log4shell
