@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.6.1'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id "org.sonarqube" version "3.3"
 }
 
 group = 'fr.christophetd.log4shell'
@@ -22,10 +23,6 @@ dependencies {
 
 test {
 	useJUnitPlatform()
-}
-
-plugins {
-  id "org.sonarqube" version "3.3"
 }
 
 sonarqube {
