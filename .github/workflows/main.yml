@@ -47,7 +47,7 @@ jobs:
         # uses: gradle/gradle-build-action@5056fa9d50478a14af3c9925c12ca02318659d3e
         uses: gradle/gradle-build-action@v2.4.1
         with:
-          gradle-version: current
+          gradle-version: 7.3.1
           arguments: bootJar --no-daemon
           build-root-directory: .
       - name: Run Aqua scanner
