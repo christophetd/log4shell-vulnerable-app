@@ -43,18 +43,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Gradle Build Action
-        # You may pin to the exact commit or the version.
-        # uses: gradle/gradle-build-action@5056fa9d50478a14af3c9925c12ca02318659d3e
         uses: docker://gradle:7.3.1-jdk17
         with:
           user: gradle
-          volumes:
-            - /github/workspace:/home/gradle/src
-          workdir: /home/gradle/src
-          args:
-            - gradle 
-            - bootJar 
-            - --no-daemon
+          args: gradle bootJar --no-daemon
       - name: Run Aqua scanner
         uses: docker://aquasec/aqua-scanner
         with:
