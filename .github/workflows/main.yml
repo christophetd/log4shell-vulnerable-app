@@ -49,7 +49,7 @@ jobs:
         with:
           gradle-version: current
           arguments: bootJar --no-daemon
-          build-root-directory: src
+          build-root-directory: .
       - name: Run Aqua scanner
         uses: docker://aquasec/aqua-scanner
         with:
