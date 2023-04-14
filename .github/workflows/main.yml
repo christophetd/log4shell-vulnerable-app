@@ -42,19 +42,26 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      #- name: Run Aqua scanner
-      #  uses: docker://aquasec/aqua-scanner
-      #  with:
-      #    args: trivy fs -d --scanners config,vuln,secret --sast .
-      #    # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-      #    # To enable SAST scanning, add: --sast
-      #    # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
-      #  env:
-      #    AQUA_KEY: ${{ secrets.AQUA_KEY }}
-      #    AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    TRIVY_RUN_AS_PLUGIN: 'aqua'
-      #    # For http/https proxy configuration add env vars: HTTP_PROXY/HTTPS_PROXY, CA-CRET (path to CA certificate)
+      - name: Gradle Build Action
+        # You may pin to the exact commit or the version.
+        # uses: gradle/gradle-build-action@5056fa9d50478a14af3c9925c12ca02318659d3e
+        uses: gradle/gradle-build-action@v2.4.1
+        with:
+          arguments: bootJar --no-daemon
+          build-root-directory: src
+      - name: Run Aqua scanner
+        uses: docker://aquasec/aqua-scanner
+        with:
+          args: trivy fs -d --scanners config,vuln,secret --sast .
+          # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          # To enable SAST scanning, add: --sast
+          # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
+        env:
+          AQUA_KEY: ${{ secrets.AQUA_KEY }}
+          AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_RUN_AS_PLUGIN: 'aqua'
+          # For http/https proxy configuration add env vars: HTTP_PROXY/HTTPS_PROXY, CA-CRET (path to CA certificate)
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -75,19 +82,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Run Aqua scanner
-        uses: docker://aquasec/aqua-scanner
-        with:
-          args: trivy image -d --scanners config,vuln,secret  "${{ steps.meta.outputs.tags }}"
-          # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-          # To enable SAST scanning, add: --sast
-          # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
-        env:
-          AQUA_KEY: ${{ secrets.AQUA_KEY }}
-          AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TRIVY_RUN_AS_PLUGIN: 'aqua'
-          # For http/https proxy configuration add env vars: HTTP_PROXY/HTTPS_PROXY, CA-CRET (path to CA certificate)
       - name: Manifest Generation
         run: |
           docker image ls
