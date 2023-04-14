@@ -1,0 +1,100 @@
+name: build
+on:
+  push:
+    branches:
+      - main
+      - master
+      - poggenpower*
+  pull_request:
+    branches: 
+      - main
+      # comment
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+
+jobs:
+  checkout:
+    name: Checkout
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup pipeline enforcer
+        uses: aquasecurity/pipeline-enforcer-action@v1.0.0
+        with:
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Run Aqua scanner
+      #  uses: docker://aquasec/aqua-scanner
+      #  with:
+      #    args: trivy fs -d --scanners config,vuln,secret --sast .
+      #    # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+      #    # To enable SAST scanning, add: --sast
+      #    # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
+      #  env:
+      #    AQUA_KEY: ${{ secrets.AQUA_KEY }}
+      #    AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #    TRIVY_RUN_AS_PLUGIN: 'aqua'
+      #    # For http/https proxy configuration add env vars: HTTP_PROXY/HTTPS_PROXY, CA-CRET (path to CA certificate)
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v2.1.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run Aqua scanner
+        uses: docker://aquasec/aqua-scanner
+        with:
+          args: trivy image -d --scanners config,vuln,secret  "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tags }}"
+          # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          # To enable SAST scanning, add: --sast
+          # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
+        env:
+          AQUA_KEY: ${{ secrets.AQUA_KEY }}
+          AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_RUN_AS_PLUGIN: 'aqua'
+          # For http/https proxy configuration add env vars: HTTP_PROXY/HTTPS_PROXY, CA-CRET (path to CA certificate)
+      - name: Manifest Generation
+        run: |
+          docker image ls
+          echo ${{ secrets.GITHUB_TOKEN }} | wc 
+          curl -L download.codesec.aquasec.com/billy/install.sh | sh
+          billy generate \
+              --access-token "${{ secrets.PERSONAL_GH_TOKEN }}" \
+             --aqua-key "${{ secrets.AQUA_KEY }}" \
+             --aqua-secret "${{ secrets.AQUA_SECRET }}" \
+             --artifact-path "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tags }}"
