@@ -97,4 +97,4 @@ jobs:
               --access-token "${{ secrets.PERSONAL_GH_TOKEN }}" \
              --aqua-key "${{ secrets.AQUA_KEY }}" \
              --aqua-secret "${{ secrets.AQUA_SECRET }}" \
-             --artifact-path "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tags }}"
+             --artifact-path "${{ steps.meta.outputs.tags }}"
