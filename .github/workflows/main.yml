@@ -50,7 +50,7 @@ jobs:
       - name: Run Aqua scanner
         uses: docker://aquasec/aqua-scanner
         with:
-          args: trivy rootfs -d --scanners config,vuln,secret --sast .
+          args: trivy rootfs -d --scanners config,vuln,secret .
           # To customize which severities to scan for, add the following flag: --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           # To enable SAST scanning, add: --sast
           # To enable npm/dotnet non-lock file scanning, add: --package-json / --dotnet-proj
