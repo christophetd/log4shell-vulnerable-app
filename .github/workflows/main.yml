@@ -28,11 +28,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Setup pipeline enforcer
-        uses: aquasecurity/pipeline-enforcer-action@v1.0.0
-        with:
-          aqua-key: ${{ secrets.AQUA_KEY }}
-          aqua-secret: ${{ secrets.AQUA_SECRET }}
+#      - name: Setup pipeline enforcer
+#        uses: aquasecurity/pipeline-enforcer-action@v1.0.0
+#        with:
+#          aqua-key: ${{ secrets.AQUA_KEY }}
+#          aqua-secret: ${{ secrets.AQUA_SECRET }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -47,6 +47,7 @@ jobs:
         # uses: gradle/gradle-build-action@5056fa9d50478a14af3c9925c12ca02318659d3e
         uses: gradle/gradle-build-action@v2.4.1
         with:
+          gradle-version: current
           arguments: bootJar --no-daemon
           build-root-directory: src
       - name: Run Aqua scanner
